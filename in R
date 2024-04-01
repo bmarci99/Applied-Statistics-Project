@@ -68,14 +68,61 @@ combined_data_filtered$Ora <- as.integer(combined_data_filtered$Ora)
 # Convert PrezzoZonale column to integer
 combined_data_filtered$PrezzoZonale <- as.integer(combined_data_filtered$PrezzoZonale)
 
+# Convert Quantita column to integer
+combined_data_filtered$Quantita <- as.integer(combined_data_filtered$Quantita)
+
+# Convert Prezzo column to integer
+combined_data_filtered$Prezzo <- as.integer(combined_data_filtered$Prezzo)
+
 # Extract day of the week
 combined_data_filtered$DayOfWeek <- weekdays(combined_data_filtered$Data)
 
 # Extract month
 combined_data_filtered$Month <- month(combined_data_filtered$Data)
 
-#had some issues gonna work on here 
+#had some issues gonna work on here
 # Group by date
 # Visualize daily trends
 # ggplot2
 # Group by day of the week and month
+
+# Group by date
+daily_data <- combined_data_filtered %>%
+  group_by(Data) %>%
+  summarize(
+    Avg_PrezzoZonale = mean(PrezzoZonale),
+    Avg_Quantita = mean(Quantita),
+    Avg_Prezzo = mean(Prezzo)
+  )
+
+# Visualize daily trends
+# Example plot using ggplot2
+library(ggplot2)
+
+ggplot(daily_data, aes(x = Data)) +
+  geom_line(aes(y = Avg_PrezzoZonale, color = "PrezzoZonale"), size = 1) +
+  geom_line(aes(y = Avg_Quantita, color = "Quantita"), size = 1) +
+  geom_line(aes(y = Avg_Prezzo, color = "Prezzo"), size = 1) +
+  labs(title = "Daily Trends",
+       y = "Average",
+       color = "Variables") +
+  theme_minimal()
+
+# Group by day of the week and month
+day_type_month_data <- combined_data_filtered %>%
+  group_by(DayOfWeek, Month) %>%
+  summarize(
+    Avg_PrezzoZonale = mean(PrezzoZonale),
+    Avg_Quantita = mean(Quantita),
+    Avg_Prezzo = mean(Prezzo)
+  )
+
+# Visualize similarities within day type and month
+# Example plot using ggplot2
+ggplot(day_type_month_data, aes(x = DayOfWeek, y = Avg_PrezzoZonale, fill = factor(Month))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Similarities within Day Type and Month",
+       y = "Average PrezzoZonale",
+       fill = "Month") +
+  theme_minimal()
+
