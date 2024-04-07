@@ -1,0 +1,128 @@
+##DATA EXTRACTION
+library(XML)
+
+# List all XML files in directory which consists only 2024 data
+xml_files <- list.files(pattern = "MGPDomandaOfferta")
+
+# Loop over files and read into data frames
+all_data <- lapply(xml_files, function(file) {
+  xml_data <- xmlParse(file)
+  data <- data.frame(
+    Data = xpathSApply(xml_data, "//DomandaOfferta/Data", xmlValue),
+    Ora = xpathSApply(xml_data, "//DomandaOfferta/Ora", xmlValue),
+    Mercato = xpathSApply(xml_data, "//DomandaOfferta/Mercato", xmlValue),
+    ZonaMercato = xpathSApply(xml_data, "//DomandaOfferta/ZonaMercato", xmlValue),
+    PrezzoZonale = xpathSApply(xml_data, "//DomandaOfferta/PrezzoZonale", xmlValue),
+    Quantita = xpathSApply(xml_data, "//DomandaOfferta/Quantita", xmlValue),
+    Prezzo = xpathSApply(xml_data, "//DomandaOfferta/Prezzo", xmlValue),
+    Tipo = xpathSApply(xml_data, "//DomandaOfferta/Tipo", xmlValue)
+  )
+  return(data)
+})
+
+# Combine all data frames into one
+combined_data <- do.call(rbind, all_data)
+
+# Print the combined data frame
+head(combined_data)
+tail(combined_data)
+
+##DATA PREP
+# Define the list of zones you want to filter for
+target_zones <- c("CALA", "CNOR", "CSUD", "NORD", "SARD", "SICI", "SUD", 
+                  "AUST", "COAC", "CORS", "FRAN", "GREC", "SLOV", "SVIZ", 
+                  "MALT", "COUP", "MONT")
+
+# Split ZonaMercato column into separate zones
+zones <- strsplit(combined_data$ZonaMercato, ";")
+
+# Check if all target zones are present for each row
+rows_with_all_zones <- sapply(zones, function(row_zones) all(target_zones %in% row_zones))
+
+# Filter out rows that don't contain all target zones
+combined_data_filtered <- combined_data[rows_with_all_zones, ]
+
+# Print the filtered data frame
+head(combined_data_filtered)
+tail(combined_data_filtered)
+
+# Remove ZonaMercato and Mercato columns
+combined_data_filtered <- combined_data_filtered[, !(names(combined_data_filtered) %in% c("ZonaMercato", "Mercato"))]
+
+# Print the modified data frame
+head(combined_data_filtered)
+tail(combined_data_filtered)
+
+##EDA
+library(dplyr)     # For data manipulation
+library(lubridate) # For date-time operations
+
+combined_data_filtered$Data <- as.Date(combined_data_filtered$Data, format = "%Y%m%d") #appropriate date format for R
+
+# Convert Data column to Date format
+combined_data_filtered$Data <- as.Date(combined_data_filtered$Data)
+
+# Convert Ora column to integer
+combined_data_filtered$Ora <- as.integer(combined_data_filtered$Ora)
+
+# Convert PrezzoZonale column to integer
+combined_data_filtered$PrezzoZonale <- as.integer(combined_data_filtered$PrezzoZonale)
+
+# Convert Quantita column to integer
+combined_data_filtered$Quantita <- as.integer(combined_data_filtered$Quantita)
+
+# Convert Prezzo column to integer
+combined_data_filtered$Prezzo <- as.integer(combined_data_filtered$Prezzo)
+
+# Extract day of the week
+combined_data_filtered$DayOfWeek <- weekdays(combined_data_filtered$Data)
+
+# Extract month
+combined_data_filtered$Month <- month(combined_data_filtered$Data)
+
+#had some issues gonna work on here
+# Group by date
+# Visualize daily trends
+# ggplot2
+# Group by day of the week and month
+
+# Group by date
+daily_data <- combined_data_filtered %>%
+  group_by(Data) %>%
+  summarize(
+    Avg_PrezzoZonale = mean(PrezzoZonale),
+    Avg_Quantita = mean(Quantita),
+    Avg_Prezzo = mean(Prezzo)
+  )
+
+# Visualize daily trends
+# Example plot using ggplot2
+library(ggplot2)
+
+ggplot(daily_data, aes(x = Data)) +
+  geom_line(aes(y = Avg_PrezzoZonale, color = "PrezzoZonale"), size = 1) +
+  geom_line(aes(y = Avg_Quantita, color = "Quantita"), size = 1) +
+  geom_line(aes(y = Avg_Prezzo, color = "Prezzo"), size = 1) +
+  labs(title = "Daily Trends",
+       y = "Average",
+       color = "Variables") +
+  theme_minimal()
+
+# Group by day of the week and month
+day_type_month_data <- combined_data_filtered %>%
+  group_by(DayOfWeek, Month) %>%
+  summarize(
+    Avg_PrezzoZonale = mean(PrezzoZonale),
+    Avg_Quantita = mean(Quantita),
+    Avg_Prezzo = mean(Prezzo)
+  )
+
+# Visualize similarities within day type and month
+# Example plot using ggplot2
+ggplot(day_type_month_data, aes(x = DayOfWeek, y = Avg_PrezzoZonale, fill = factor(Month))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Similarities within Day Type and Month",
+       y = "Average PrezzoZonale",
+       fill = "Month") +
+  theme_minimal()
+
