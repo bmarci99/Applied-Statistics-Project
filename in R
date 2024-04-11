@@ -97,9 +97,13 @@ ggplot(bid_data, aes(x = Data, y = PrezzoZonale)) +
   labs(title = "Zonal Price Trend over Time") +
   theme_minimal()
 
-
 ggplot(bid_data, aes(x = factor(Ora), y = PrezzoZonale)) +
   geom_boxplot() +
   labs(title = "Distribution of Zonal Price per Hour") +
+  theme_minimal()
+
+ggplot(bid_data, aes(x = DayOfWeek, y = PrezzoZonale)) +
+  geom_boxplot() +
+  labs(title = "Distribution of Zonal Price by Day of the Week") +
   theme_minimal()
 
