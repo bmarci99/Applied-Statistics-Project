@@ -80,49 +80,26 @@ combined_data_filtered$DayOfWeek <- weekdays(combined_data_filtered$Data)
 # Extract month
 combined_data_filtered$Month <- month(combined_data_filtered$Data)
 
-#had some issues gonna work on here
-# Group by date
-# Visualize daily trends
-# ggplot2
-# Group by day of the week and month
+# Offer data
+offer_data <- combined_data_filtered %>%
+  filter(Tipo == "OFF") %>%
+  select(-Tipo)
 
-# Group by date
-daily_data <- combined_data_filtered %>%
-  group_by(Data) %>%
-  summarize(
-    Avg_PrezzoZonale = mean(PrezzoZonale),
-    Avg_Quantita = mean(Quantita),
-    Avg_Prezzo = mean(Prezzo)
-  )
+# bid data
+bid_data <- combined_data_filtered %>%
+  filter(Tipo == "BID") %>%
+  select(-Tipo)
 
-# Visualize daily trends
-# Example plot using ggplot2
 library(ggplot2)
 
-ggplot(daily_data, aes(x = Data)) +
-  geom_line(aes(y = Avg_PrezzoZonale, color = "PrezzoZonale"), size = 1) +
-  geom_line(aes(y = Avg_Quantita, color = "Quantita"), size = 1) +
-  geom_line(aes(y = Avg_Prezzo, color = "Prezzo"), size = 1) +
-  labs(title = "Daily Trends",
-       y = "Average",
-       color = "Variables") +
+ggplot(bid_data, aes(x = Data, y = PrezzoZonale)) +
+  geom_line() +
+  labs(title = "Zonal Price Trend over Time") +
   theme_minimal()
 
-# Group by day of the week and month
-day_type_month_data <- combined_data_filtered %>%
-  group_by(DayOfWeek, Month) %>%
-  summarize(
-    Avg_PrezzoZonale = mean(PrezzoZonale),
-    Avg_Quantita = mean(Quantita),
-    Avg_Prezzo = mean(Prezzo)
-  )
 
-# Visualize similarities within day type and month
-# Example plot using ggplot2
-ggplot(day_type_month_data, aes(x = DayOfWeek, y = Avg_PrezzoZonale, fill = factor(Month))) +
-  geom_bar(stat = "identity", position = "dodge") +
-  labs(title = "Similarities within Day Type and Month",
-       y = "Average PrezzoZonale",
-       fill = "Month") +
+ggplot(bid_data, aes(x = factor(Ora), y = PrezzoZonale)) +
+  geom_boxplot() +
+  labs(title = "Distribution of Zonal Price per Hour") +
   theme_minimal()
 
